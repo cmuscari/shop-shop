@@ -19,30 +19,28 @@ const { Provider } = StoreContext;
 
 // The value prop is good to have included, as it opens us up to pass in more data for state if we need to. We don't actually need to in this app, but it makes this provider flexible. The other prop, or rather ...props, is in place to handle any other props the user may need. Namely, we'll need to use props.children, as this <StoreProvider> component will wrap all of our other components, making them children of it. If we didn't include {...props} in our returning <Provider> component, nothing on the page would be rendered!
 const StoreProvider = ({ value = [], ...props }) => {
-    const [state, dispatch] = useProductReducer({
-      products: [],
-      categories: [],
-      currentCategory: '',
-    });
-    // use this to confirm it works!
-    console.log(state);
-    return <Provider value={[state, dispatch]} {...props} />;
-  };
+  const [state, dispatch] = useProductReducer({
+    products: [],
+    cart: [],
+    cartOpen: false,
+    categories: [],
+    currentCategory: ''
+  });
+  // use this to confirm it works!
+  console.log(state);
+  return <Provider value={[state, dispatch]} {...props} />;
+};
 
 
 // The last thing we need to do is create the custom function using the useContext() Hook to be used by the components that actually need the data our <StoreProvider> will be, well . . . providing!
 // We just created our own custom React Hook! When we execute this function from within a component, we will receive the [state, dispatch] data our StoreProvider provider manages for us. This means that any component that has access to our StoreProvider component can use any data in our global state container or update it using the dispatch function.
 const useStoreContext = () => {
-    return useContext(StoreContext);
-  };
+  return useContext(StoreContext);
+};
 
 
 
-  export { StoreProvider, useStoreContext };
-
-
-
-
+export { StoreProvider, useStoreContext };
 
 
 
@@ -61,4 +59,7 @@ const useStoreContext = () => {
 
 
 
-  
+
+
+
+
