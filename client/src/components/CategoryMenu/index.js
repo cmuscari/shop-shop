@@ -3,6 +3,7 @@ import { UPDATE_CATEGORIES, UPDATE_CURRENT_CATEGORY } from '../../utils/actions'
 import { useQuery } from '@apollo/client';
 import { QUERY_CATEGORIES } from '../../utils/queries';
 import { useStoreContext } from "../../utils/GlobalState";
+import { idbPromise } from '../../utils/helpers';
 
 
 // The big change we're about to implement is how the data gets to the UI. Currently, we have it set up to use the useQuery() Hook from Apollo to retrieve all of our category data and use it for the UI. This works great, but because we want to add offline capabilities later, this may become more difficult.
@@ -17,7 +18,7 @@ function CategoryMenu() {
   const { categories } = state;
   // Now, we still don't actually have any data in state yet. We need to somehow take the categoryData that returns from the useQuery() Hook and use the dispatch() method to set our global state. How can we do that if useQuery() is an asynchronous function? We can't simply just add the dispatch() method below it, as categoryData won't exist on load!
   // Instead, we need to use the React useEffect() Hook, which was created specifically for times like this. 
-  const { data: categoryData } = useQuery(QUERY_CATEGORIES);
+  const { loading, data: categoryData } = useQuery(QUERY_CATEGORIES);
 
 
 
@@ -30,9 +31,22 @@ function CategoryMenu() {
         type: UPDATE_CATEGORIES,
         categories: categoryData.categories
       });
-    }
-  }, [categoryData, dispatch]);
 
+      // update the useEffect() Hook to also write category data to the categories object store in IndexedDB when we save categories to state.
+      categoryData.categories.forEach(category => {
+        idbPromise('categories', 'put', category);
+      });
+      // Now let's set it up to retrieve that category data if we lose our internet connection. Just like before with the ProductList component, we'll check if the useQuery() Hook's loading return value exists—and we'll pull from IndexedDB if it doesn't.
+    } else if (!loading) {
+      idbPromise('categories', 'get').then(categories => {
+        dispatch({
+          type: UPDATE_CATEGORIES,
+          categories: categories
+        });
+      });
+    }
+  }, [categoryData, loading, dispatch]);
+  
 
 
   const handleClick = id => {
